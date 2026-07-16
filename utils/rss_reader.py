@@ -4,15 +4,17 @@ import os
 import re
 from datetime import datetime
 from bs4 import BeautifulSoup
-from config import RSS_FEEDS  
+from config import RSS_FEEDS
 
 CACHE_FILE = "data/cache.json"
 
 def clean_html(raw_html: str) -> str:
     """Remove HTML tags and entities from RSS summary."""
+    if not raw_html:
+        return ""
     soup = BeautifulSoup(raw_html, "html.parser")
     text = soup.get_text()
-    return re.sub(r'\s+', ' ', text).strip()
+    return re.sub(r"\s+", ' ', text).strip()
 
 def fetch_new_articles():
     # Load cache
@@ -33,14 +35,15 @@ def fetch_new_articles():
                 article = {
                     "source": feed.feed.title if "title" in feed.feed else "Unknown Source",
                     "title": entry.title,
-                    "summary": clean_html(entry.summary),
                     "link": link,
-                    "published": getattr(entry, "published", str(datetime.now())),
+                    "published": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "summary": clean_html(getattr(entry, 'summary', getattr(entry, 'description', ''))),
                 }
                 new_articles.append(article)
                 cache["processed_links"].append(link)
 
+    # Save cache
     with open(CACHE_FILE, "w") as f:
-        json.dump(cache, f, indent=2)
+        json.dump(cache, f)
 
     return new_articles
