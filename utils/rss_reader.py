@@ -36,7 +36,7 @@ def fetch_new_articles():
                     "source": feed.feed.title if "title" in feed.feed else "Unknown Source",
                     "title": entry.title,
                     "link": link,
-                    "published": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "published": getattr(entry, "published", str(datetime.now())),
                     "summary": clean_html(getattr(entry, 'summary', getattr(entry, 'description', ''))),
                 }
                 new_articles.append(article)
