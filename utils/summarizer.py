@@ -1,11 +1,5 @@
-# ==========================================
-# summarizer.py — Summarize article text using FLAN-T5
-# ==========================================
-
 from transformers import pipeline
 
-# Load once globally (so it doesn't reload for every article)
-# model = google/flan-t5-small → lightweight, works fine on CPU
 summarizer = pipeline("summarization", model="google/flan-t5-small")
 
 def summarize_text(text: str, max_words: int = 60) -> str:
@@ -15,7 +9,6 @@ def summarize_text(text: str, max_words: int = 60) -> str:
     if not text.strip():
         return "No content to summarize."
 
-    # The model works best with < 512 tokens
     max_input_length = 1000
     text = text[:max_input_length]
 
@@ -26,7 +19,15 @@ def summarize_text(text: str, max_words: int = 60) -> str:
             min_length=25,
             do_sample=False
         )
-        return result[0]["summary_text"].strip()
+        if result and isinstance(result, list) and len(result) > 0:
+            if "summary_text" in result[0]:
+                return result[0]["summary_text"].strip()
+            else:
+                print(f"Unexpected result format: {result}")
+                return text[:200] + "..."
+        else:
+            print(f"Empty or invalid result: {result}")
+            return text[:200] + "..."
     except Exception as e:
         print(f"Summarization error: {e}")
         return text[:200] + "..."
